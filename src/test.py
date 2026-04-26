@@ -35,16 +35,45 @@ def hit_at_k(
     return hits / len(true_items)
 
 
-def estimate(model: Model, trains: list[list[int]], targets: list[int]) -> float:
+def estimate(model: Model, trains: list[list[int]], targets: list[int]) -> list[float]:
     recs = []
 
-    for session in trains:
-        last_item = session[-1]
-        rec = model.forecast(last_item=last_item)
+    short = []
+    short_targets = []
+    mediuml = []
+    mediuml_targets = []
+    mediumr = []
+    mediumr_targets = []
+    long = []
+    long_targets = []
+
+    for i, session in enumerate(trains):
+        rec = model.experiment_forecast(session)
         recs.append(rec)
+
+        # числа ниже опираются на граф
+        if len(session) <= 4:
+            short.append(rec)
+            short_targets.append(targets[i])
+        if len(session) > 4 and len(session) < 12:
+            mediuml.append(rec)
+            mediuml_targets.append(targets[i])
+        if len(session) >= 12 and len(session) < 18:
+            mediumr.append(rec)
+            mediumr_targets.append(targets[i])
+        if len(session) >= 18:
+            long.append(rec)
+            long_targets.append(targets[i])
+        
     
     result = hit_at_k(recs, targets)
-    return result
+    result_short = hit_at_k(short, short_targets)
+    result_mediuml = hit_at_k(mediuml, mediuml_targets)
+    result_mediumr = hit_at_k(mediumr, mediumr_targets)
+    result_long = hit_at_k(long, long_targets)
+
+    return [result, result_short, result_mediuml, result_mediumr, result_long]
+
 
 def estimate_popular(model: Model, targets: list[int]) -> float:
     recs = []
